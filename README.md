@@ -19,7 +19,9 @@ These can be installed with pip or easy\_install from a terminal:
 
     sudo pip install requests
     sudo pip install bencode
+
 OR
+
     sudo easy_install requests
     sudo easy_install bencode
 
