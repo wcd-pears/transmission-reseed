@@ -23,18 +23,18 @@ def rpc_call(method, arguments=None, tag=None):
   if resp.status_code != 200:
     raise Exception('unexpected status code %d' % resp.status_code)
   if resp.json['result'] == 'success':
-    return Response(success=True,
-                    error=None,
-                    arguments=resp.json.get('arguments', None),
-                    tag=resp.json.get('tag', None))
+    success = True
+    error = None
   else:
-    return Response(success=False,
-                    error=resp.json['result'],
-                    arguments=resp.json.get('arguments', None),
-                    tag=resp.json.get('tag', None))
+    success = False
+    error = resp.json['result']
+  return Response(success=success,
+                  error=error,
+                  arguments=resp.json.get('arguments', None),
+                  tag=resp.json.get('tag', None))
 
 def construct_req(method, arguments, tag):
-  req = dict(method=method)
+  req = {'method': method}
   if arguments:
     req['arguments'] = arguments
   if tag:
