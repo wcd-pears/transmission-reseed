@@ -51,8 +51,9 @@ def do_post(req):
     return do_post(req)
   return resp
 
-def torrent_add(filename, download_dir=None):
-  arguments = {'filename': filename}
+def torrent_add(filename, download_dir=None, paused=False):
+  arguments = {'filename': filename,
+               'paused': paused}
   if download_dir:
     arguments['download-dir'] = download_dir
   return rpc_call('torrent-add', arguments)
@@ -65,6 +66,8 @@ if __name__ == '__main__':
                       help='where to look for data (can be specified multiple times)')
   parser.add_argument('--url', '-u', default='http://localhost:9091/transmission/rpc',
                       help='URL to Transmission\' RPC API')
+  parser.add_argument('--paused', '-p', action='store_true',
+                      help='add torrents in paused state')
   cmdline = parser.parse_args()
   url = cmdline.url
 
@@ -79,7 +82,7 @@ if __name__ == '__main__':
     tordata = open(torrent, 'rb').read()
     torrent_name = bdecode(tordata)['info']['name']
     if torrent_name in data_loc:
-      resp = torrent_add(torrent, data_loc[torrent_name])
+      resp = torrent_add(torrent, data_loc[torrent_name], cmdline.paused)
       if resp.success:
         assert('torrent-added' in resp.arguments)
         print e8('Added %s' % path.join(data_loc[torrent_name], torrent_name))
