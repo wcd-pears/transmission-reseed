@@ -2,7 +2,7 @@
 
 from bencode import bdecode
 import requests
-import simplejson
+import json
 from os import path, listdir, remove
 from glob import glob
 from collections import namedtuple
@@ -40,7 +40,7 @@ def construct_req(method, arguments, tag):
     req['arguments'] = arguments
   if tag:
     req['tag'] = tag
-  return simplejson.dumps(req)
+  return json.dumps(req)
 
 url = '' # will be set from command line later
 
