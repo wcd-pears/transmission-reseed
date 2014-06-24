@@ -22,16 +22,17 @@ def rpc_call(method, arguments=None, tag=None):
   resp = do_post(req)
   if resp.status_code != 200:
     raise Exception('unexpected status code %d' % resp.status_code)
-  if resp.json['result'] == 'success':
+  j = resp.json()
+  if j['result'] == 'success':
     success = True
     error = None
   else:
     success = False
-    error = resp.json['result']
+    error = j['result']
   return Response(success=success,
                   error=error,
-                  arguments=resp.json.get('arguments', None),
-                  tag=resp.json.get('tag', None))
+                  arguments=j.get('arguments', None),
+                  tag=j.get('tag', None))
 
 def construct_req(method, arguments, tag):
   req = {'method': method}
