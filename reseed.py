@@ -2,7 +2,7 @@
 
 from bencode import bdecode
 import requests
-import simplejson
+import json
 from os import path, listdir, remove
 from glob import glob
 from collections import namedtuple
@@ -13,7 +13,7 @@ sess = requests.Session()
 session_id = ''
 
 e8 = lambda s: s.encode('utf8')
-#d8 = lambda s: s.decode('utf8')
+d8 = lambda s: s.decode('utf8')
 
 Response = namedtuple('Response', 'success error arguments tag')
 
@@ -22,16 +22,17 @@ def rpc_call(method, arguments=None, tag=None):
   resp = do_post(req)
   if resp.status_code != 200:
     raise Exception('unexpected status code %d' % resp.status_code)
-  if resp.json['result'] == 'success':
+  j = resp.json()
+  if j['result'] == 'success':
     success = True
     error = None
   else:
     success = False
-    error = resp.json['result']
+    error = j['result']
   return Response(success=success,
                   error=error,
-                  arguments=resp.json.get('arguments', None),
-                  tag=resp.json.get('tag', None))
+                  arguments=j.get('arguments', None),
+                  tag=j.get('tag', None))
 
 def construct_req(method, arguments, tag):
   req = {'method': method}
@@ -39,7 +40,7 @@ def construct_req(method, arguments, tag):
     req['arguments'] = arguments
   if tag:
     req['tag'] = tag
-  return simplejson.dumps(req)
+  return json.dumps(req)
 
 url = '' # will be set from command line later
 
@@ -66,8 +67,8 @@ if __name__ == '__main__':
                       help='where to look for data (can be specified multiple times)')
   parser.add_argument('--url', '-u', default='http://localhost:9091/transmission/rpc',
                       help='URL to Transmission\' RPC API')
-  parser.add_argument('--paused', '-p', action='store_true',
-                      help='add torrents in paused state')
+  parser.add_argument('--start', action='store_true',
+                      help='add torrents in started (non-paused) state (not recommended)')
   cmdline = parser.parse_args()
   url = cmdline.url
 
@@ -80,9 +81,9 @@ if __name__ == '__main__':
 
   for torrent in torrents:
     tordata = open(torrent, 'rb').read()
-    torrent_name = bdecode(tordata)['info']['name']
+    torrent_name = d8(bdecode(tordata)['info']['name'])
     if torrent_name in data_loc:
-      resp = torrent_add(torrent, data_loc[torrent_name], cmdline.paused)
+      resp = torrent_add(torrent, data_loc[torrent_name], not cmdline.start)
       if resp.success:
         assert('torrent-added' in resp.arguments)
         print e8('Added %s' % path.join(data_loc[torrent_name], torrent_name))
